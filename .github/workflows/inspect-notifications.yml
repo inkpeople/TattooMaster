@@ -1,0 +1,25 @@
+name: Inspect TattooMaster notifications
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-notifications.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Extract and inspect notification implementation
+        shell: bash
+        run: |
+          unzip -q tattoo-android.zip -d extracted
+          echo '===== FILE TREE ====='
+          find extracted -type f | sort
+          echo '===== MANIFEST ====='
+          cat "$(find extracted -name AndroidManifest.xml | head -n 1)"
+          echo '===== GRADLE FILES ====='
+          find extracted -type f \( -name '*.gradle' -o -name '*.gradle.kts' \) -maxdepth 5 -print -exec sed -n '1,240p' {} \;
+          echo '===== NOTIFICATION / WEBVIEW REFERENCES ====='
+          grep -RniE 'notification|AlarmManager|BroadcastReceiver|WebView|serviceWorker|PushManager|POST_NOTIFICATIONS|BOOT_COMPLETED|setExact' extracted --include='*.kt' --include='*.java' --include='*.xml' --include='*.js' --include='*.html' --include='*.json' || true
