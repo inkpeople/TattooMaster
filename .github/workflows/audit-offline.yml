@@ -1,0 +1,27 @@
+name: Audit TattooMaster offline operation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/audit-offline.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Inspect offline dependencies
+        shell: bash
+        run: |
+          set -e
+          mkdir extracted
+          unzip -q tattoo-android.zip -d extracted
+          echo '===== ANDROID MANIFEST ====='
+          cat extracted/app/src/main/AndroidManifest.xml
+          echo '===== EXTERNAL NETWORK REFERENCES ====='
+          grep -RniE 'https?://|wss?://|fetch\(|XMLHttpRequest|WebSocket|firebase|supabase|googleapis|fonts.googleapis|cdnjs|jsdelivr|unpkg' extracted/app/src/main --exclude='*.png' --exclude='*.jpg' --exclude='*.webp' || true
+          echo '===== APP DATA / STORAGE REFERENCES ====='
+          grep -RniE 'localStorage|SharedPreferences|RoomDatabase|SQLite|filesDir|openFileOutput' extracted/app/src/main --include='*.java' --include='*.kt' --include='*.html' || true
+          echo '===== BUILD CONFIG ====='
+          find extracted -maxdepth 4 -type f \( -name '*.gradle' -o -name '*.gradle.kts' \) -print -exec sed -n '1,220p' {} \;
