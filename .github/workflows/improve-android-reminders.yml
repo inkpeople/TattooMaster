@@ -1,6 +1,9 @@
 name: Improve Android reminders
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/improve-android-reminders.yml'
 permissions:
   contents: write
 jobs:
