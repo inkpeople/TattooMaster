@@ -1,0 +1,41 @@
+name: Inspect Android project
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: List archive contents
+        run: unzip -l tattoo-android.zip
+
+      - name: Extract and inspect Gradle configuration
+        shell: bash
+        run: |
+          mkdir -p extracted
+          unzip -q tattoo-android.zip -d extracted
+
+          SETTINGS_FILE="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)"
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "::error::Не найден settings.gradle или settings.gradle.kts"
+            exit 1
+          fi
+
+          PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
+          echo "Project directory: $PROJECT_DIR"
+          echo "----- settings file -----"
+          cat "$SETTINGS_FILE"
+
+          for FILE in "$PROJECT_DIR/build.gradle" "$PROJECT_DIR/build.gradle.kts" "$PROJECT_DIR/gradle.properties" "$PROJECT_DIR/app/build.gradle" "$PROJECT_DIR/app/build.gradle.kts"; do
+            if [ -f "$FILE" ]; then
+              echo "----- $FILE -----"
+              cat "$FILE"
+            fi
+          done
+
+          echo "----- project files -----"
+          find "$PROJECT_DIR" -maxdepth 4 -type f | sort
