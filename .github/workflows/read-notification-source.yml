@@ -1,0 +1,23 @@
+name: Read TattooMaster notification source
+on:
+  push:
+    paths:
+      - '.github/workflows/read-notification-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Print Android notification source
+        shell: bash
+        run: |
+          unzip -q tattoo-android.zip -d extracted
+          for f in extracted/app/src/main/java/ru/tattoo/master/*.java; do
+            echo "===== $f ====="
+            cat "$f"
+          done
+          echo '===== HTML notification and calendar code ====='
+          sed -n '1,380p' extracted/app/src/main/assets/index.html
